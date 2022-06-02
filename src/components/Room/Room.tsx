@@ -7,7 +7,11 @@ const started = false;
 
 function Room() {
   const mimeType = useMemo(() => getCodec(), []);
-  const connection = useMemo(() => new WebSocket('ws://localhost:3001/', 'json'), []);
+  const protocol = /s/.test(window.location.protocol) ? 'wss' : 'ws';
+  const connection = useMemo(
+    () => new WebSocket(`${protocol}://${process.env.REACT_APP_SERVER_URL}/`, 'json'),
+    []
+  );
   const [timeout, setTimeout] = useState<NodeJS.Timer>(
     setInterval(() => {
       /** */
