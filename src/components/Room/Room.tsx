@@ -1,19 +1,37 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import s from './Room.module.scss';
-import { log, MediaConstraints, CODECS, getCodec, getVideoRef } from '../../utils';
+import { log, MediaConstraints, CODECS, getCodec, getVideoRef, wsSendBinary } from '../../utils';
+import { WSTypes } from '../../server';
+
+let started = false;
 
 function Room() {
   const mimeType = useMemo(() => getCodec(), []);
+  const connection = useMemo(() => new WebSocket('ws://localhost:3001/', 'json'), []);
   const [timeout, setTimeout] = useState<NodeJS.Timer>(
     setInterval(() => {
       /** */
     }, Infinity)
   );
+  const [connected, setConnected] = useState<boolean>(false);
   const [localStream, setLocalStream] = useState<MediaStream>(new MediaStream());
   const [remoteStream, setRemoteStream] = useState<string>();
+  useEffect(() => {
+    connection.onopen = () => {
+      setConnected(true);
+    };
+    return () => {
+      connection.onopen = () => {
+        /** */
+      };
+    };
+  }, [connection]);
 
   useEffect(() => {
     if (navigator.mediaDevices) {
+      if (!connected) {
+        return;
+      }
       if (!mimeType) {
         log('warn', 'From all list not one is supported', CODECS);
         return;
@@ -26,25 +44,19 @@ function Room() {
             mimeType,
           });
           mediaRecorder.onstart = () => {
-            const mediaSource = new MediaSource();
-            setRemoteStream(URL.createObjectURL(mediaSource));
-            mediaSource.addEventListener('sourceopen', sourceOpen);
-            function sourceOpen() {
-              const buffer = mediaSource.addSourceBuffer(mediaRecorder.mimeType);
-              mediaRecorder.ondataavailable = (e) => {
-                if (e.data.size > 0 && !buffer.updating) {
-                  e.data.arrayBuffer().then((data) => {
-                    if (!buffer.updating) {
-                      buffer.appendBuffer(data);
-                    }
-                  });
+            mediaRecorder.ondataavailable = (e) => {
+              if (e.data.size > 0) {
+                if (!started) {
+                  started = true;
+                  setRemoteStream('http://localhost:3001/1');
                 }
-              };
-              const _timeout = setInterval(() => {
-                mediaRecorder.requestData();
-              }, 10);
-              setTimeout(_timeout);
-            }
+                wsSendBinary(connection, e.data);
+              }
+            };
+            const _timeout = setInterval(() => {
+              mediaRecorder.requestData();
+            }, 10);
+            setTimeout(_timeout);
           };
           mediaRecorder.start();
         })
@@ -54,7 +66,7 @@ function Room() {
     } else {
       log('warn', 'Get user media is not supported');
     }
-  }, [timeout, mimeType]);
+  }, [connection, connected, mimeType]);
 
   const _localStream = useMemo(() => getVideoRef(localStream), [localStream]);
   return (
