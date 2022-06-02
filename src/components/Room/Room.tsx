@@ -64,9 +64,9 @@ function Room() {
               connection.onmessage = (e: any) => {
                 e.data.arrayBuffer().then((data: any) => {
                   if (buffer.updating || queue.length > 0) {
-                    queue.push(e.data);
+                    queue.push(data);
                   } else {
-                    buffer.appendBuffer(e.data);
+                    buffer.appendBuffer(data);
                   }
                 });
               };
