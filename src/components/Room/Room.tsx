@@ -61,7 +61,9 @@ function Room() {
               if (!started) {
                 started = true;
                 setTimeout(() => {
-                  setRemoteStream('http://localhost:3001/stream/1');
+                  setRemoteStream(
+                    `${window.location.protocol}://${process.env.REACT_APP_SERVER_URL}/stream/1`
+                  );
                 });
               }
               if (e.data.size > 0) {
