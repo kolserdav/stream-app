@@ -31,7 +31,6 @@ export const wsSendJson = (
   }
 ) => {
   const msgJSON = JSON.stringify(msg);
-  log('info', 'message', msg);
   connection.send(msgJSON);
 };
 

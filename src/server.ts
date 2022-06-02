@@ -1,5 +1,6 @@
 export enum WSTypes {
   push,
+  timeUpdate,
 }
 
 export interface PushStream {
