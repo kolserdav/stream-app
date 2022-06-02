@@ -57,16 +57,16 @@ function Room() {
                 }
               };
               buffer.onupdate = () => {
-                if (queue.length > 0) {
+                if (queue.length > 0 && !buffer.updating) {
                   buffer.appendBuffer(queue.shift());
                 }
               };
               connection.onmessage = (e: any) => {
                 e.data.arrayBuffer().then((data: any) => {
-                  if (!buffer.updating) {
-                    buffer.appendBuffer(data);
+                  if (buffer.updating || queue.length > 0) {
+                    queue.push(e.data);
                   } else {
-                    queue.push(data);
+                    buffer.appendBuffer(e.data);
                   }
                 });
               };
