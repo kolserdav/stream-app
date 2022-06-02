@@ -57,6 +57,7 @@ function Room() {
               };
               connection.onmessage = (e: any) => {
                 e.data.arrayBuffer().then((data: any) => {
+                  console.log(buffer.updating);
                   if (!buffer.updating) {
                     buffer.appendBuffer(data);
                   }
@@ -81,7 +82,7 @@ function Room() {
   const _localStream = useMemo(() => getVideoRef(localStream), [localStream]);
   return (
     <div className={s.wrapper}>
-      <video autoPlay width={640} height={480} ref={_localStream} />
+      <video muted autoPlay width={640} height={480} ref={_localStream} />
       <video autoPlay width={640} height={480}>
         {remoteStream && <source src={remoteStream} type={mimeType} />}
       </video>
