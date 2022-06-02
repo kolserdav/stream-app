@@ -37,6 +37,7 @@ function Room() {
         log('warn', 'From all list not one is supported', CODECS);
         return;
       }
+      const queue: any[] = [];
       navigator.mediaDevices
         .getUserMedia(MediaConstraints)
         .then((stream) => {
@@ -51,15 +52,21 @@ function Room() {
             function sourceOpen() {
               const buffer = mediaSource.addSourceBuffer(mediaRecorder.mimeType);
               mediaRecorder.ondataavailable = (e) => {
-                if (e.data.size > 0 && !buffer.updating) {
+                if (e.data.size > 0) {
                   wsSendBinary(connection, e.data);
+                }
+              };
+              buffer.onupdate = () => {
+                if (queue.length > 0) {
+                  buffer.appendBuffer(queue.shift());
                 }
               };
               connection.onmessage = (e: any) => {
                 e.data.arrayBuffer().then((data: any) => {
-                  console.log(buffer.updating);
                   if (!buffer.updating) {
                     buffer.appendBuffer(data);
+                  } else {
+                    queue.push(data);
                   }
                 });
               };
